@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useCricket, DismissalType } from '@/contexts/CricketContext';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from 'sonner';
+import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 
 const dismissalTypes: DismissalType[] = [
   'Bowled', 
@@ -117,13 +117,17 @@ const Scoreboard = () => {
     return `${overs}.${balls}`;
   };
 
+  const hasTeam1Completed = match.currentInnings === 2;
+  const team1 = hasTeam1Completed ? (match.battingTeam === 'team-a' ? match.teamB : match.teamA) : null;
+
   return (
     <div className="container mx-auto p-4">
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="mb-6 grid grid-cols-3">
+        <TabsList className="mb-6 grid grid-cols-4">
           <TabsTrigger value="scoreboard">Scoreboard</TabsTrigger>
           <TabsTrigger value="batting">Batting Card</TabsTrigger>
           <TabsTrigger value="bowling">Bowling Card</TabsTrigger>
+          <TabsTrigger value="summary">Match Summary</TabsTrigger>
         </TabsList>
         
         <TabsContent value="scoreboard">
@@ -170,30 +174,15 @@ const Scoreboard = () => {
                 <Separator className="my-4" />
                 
                 <div className="grid grid-cols-6 gap-1 mb-4">
-                  <div className={`col-span-1 text-center p-2 rounded-md border 
-                    ${match.currentBall >= 0 ? 'bg-cricket-green text-white' : 'bg-gray-100'}`}>
-                    1
-                  </div>
-                  <div className={`col-span-1 text-center p-2 rounded-md border 
-                    ${match.currentBall >= 1 ? 'bg-cricket-green text-white' : 'bg-gray-100'}`}>
-                    2
-                  </div>
-                  <div className={`col-span-1 text-center p-2 rounded-md border 
-                    ${match.currentBall >= 2 ? 'bg-cricket-green text-white' : 'bg-gray-100'}`}>
-                    3
-                  </div>
-                  <div className={`col-span-1 text-center p-2 rounded-md border 
-                    ${match.currentBall >= 3 ? 'bg-cricket-green text-white' : 'bg-gray-100'}`}>
-                    4
-                  </div>
-                  <div className={`col-span-1 text-center p-2 rounded-md border 
-                    ${match.currentBall >= 4 ? 'bg-cricket-green text-white' : 'bg-gray-100'}`}>
-                    5
-                  </div>
-                  <div className={`col-span-1 text-center p-2 rounded-md border 
-                    ${match.currentBall >= 5 ? 'bg-cricket-green text-white' : 'bg-gray-100'}`}>
-                    6
-                  </div>
+                  {[0, 1, 2, 3, 4, 5].map((ball) => (
+                    <div 
+                      key={ball} 
+                      className={`col-span-1 text-center p-2 rounded-md border 
+                        ${match.currentBall > ball ? 'bg-cricket-green text-white' : 'bg-gray-100'}`}
+                    >
+                      {ball + 1}
+                    </div>
+                  ))}
                 </div>
               </CardContent>
             </Card>
@@ -385,6 +374,93 @@ const Scoreboard = () => {
                   </tbody>
                 </table>
               </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="summary">
+          <Card className="bg-white shadow-md">
+            <CardHeader className="bg-cricket-green text-white">
+              <CardTitle className="text-xl font-bold">
+                Match Summary - Match #{match.id}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="mb-4">
+                <h3 className="text-lg font-semibold mb-2">Match Details</h3>
+                <p className="text-sm mb-1">Toss won by: {match.tossWinner === 'team-a' ? match.teamA.name : match.teamB.name}</p>
+                <p className="text-sm mb-1">Elected to: {match.tossChoice}</p>
+                <p className="text-sm mb-4">Current Innings: {match.currentInnings}</p>
+              </div>
+              
+              {hasTeam1Completed && team1 && (
+                <div className="mb-6">
+                  <h3 className="text-lg font-semibold mb-2">{team1.name} - First Innings</h3>
+                  <div className="bg-cricket-cream p-3 rounded-md">
+                    <Table>
+                      <TableBody>
+                        <TableRow>
+                          <TableCell className="font-medium">Total Score</TableCell>
+                          <TableCell>{team1.totalRuns}/{team1.totalWickets}</TableCell>
+                        </TableRow>
+                        <TableRow>
+                          <TableCell className="font-medium">Overs</TableCell>
+                          <TableCell>{team1.totalOvers.toFixed(1)}</TableCell>
+                        </TableRow>
+                        <TableRow>
+                          <TableCell className="font-medium">Run Rate</TableCell>
+                          <TableCell>{team1.runRate?.toFixed(2) || '0.00'}</TableCell>
+                        </TableRow>
+                      </TableBody>
+                    </Table>
+                  </div>
+                </div>
+              )}
+              
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold mb-2">{battingTeam.name} - {match.currentInnings === 1 ? 'First' : 'Second'} Innings</h3>
+                <div className="bg-cricket-cream p-3 rounded-md">
+                  <Table>
+                    <TableBody>
+                      <TableRow>
+                        <TableCell className="font-medium">Total Score</TableCell>
+                        <TableCell>{battingTeam.totalRuns}/{battingTeam.totalWickets}</TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell className="font-medium">Overs</TableCell>
+                        <TableCell>{formatOvers(match.currentOver, match.currentBall)}</TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell className="font-medium">Run Rate</TableCell>
+                        <TableCell>{battingTeam.runRate?.toFixed(2) || '0.00'}</TableCell>
+                      </TableRow>
+                    </TableBody>
+                  </Table>
+                </div>
+              </div>
+              
+              {hasTeam1Completed && team1 && (
+                <div>
+                  <h3 className="text-lg font-semibold mb-2">Required to Win</h3>
+                  <div className="bg-cricket-cream p-3 rounded-md">
+                    <Table>
+                      <TableBody>
+                        <TableRow>
+                          <TableCell className="font-medium">Runs</TableCell>
+                          <TableCell>{team1.totalRuns + 1 - battingTeam.totalRuns}</TableCell>
+                        </TableRow>
+                        <TableRow>
+                          <TableCell className="font-medium">Required Run Rate</TableCell>
+                          <TableCell>
+                            {Math.max(0, ((team1.totalRuns + 1 - battingTeam.totalRuns) / 
+                            (20 - match.currentOver - (match.currentBall/6))).toFixed(2))}
+                          </TableCell>
+                        </TableRow>
+                      </TableBody>
+                    </Table>
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
