@@ -12,7 +12,7 @@ const Index = () => {
     <div className="min-h-screen bg-cricket-cream">
       <header className="bg-cricket-green text-white py-4 shadow-md">
         <div className="container mx-auto">
-          <h1 className="text-2xl md:text-3xl font-bold text-center">Cricket Score Tracker Pro</h1>
+          <h1 className="text-2xl md:text-3xl font-bold text-center">Cricket Score Tracker</h1>
         </div>
       </header>
       
@@ -35,8 +35,7 @@ const Index = () => {
       
       <footer className="bg-cricket-navy text-white py-3 mt-8">
         <div className="container mx-auto text-center text-sm">
-          <p>&copy; {new Date().getFullYear()} Cricket Score Tracker Pro - Live Cricket Scoring</p>
-          <p className="text-xs mt-1">Data stored in Supabase</p>
+          <p>&copy; {new Date().getFullYear()} Weekend Cricket Club</p>
         </div>
       </footer>
     </div>
