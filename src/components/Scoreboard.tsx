@@ -135,23 +135,23 @@ const Scoreboard = () => {
                 </CardTitle>
                 <div className="text-sm">
                   Overs: {formatOvers(match.currentOver, match.currentBall)} | 
-                  RR: {battingTeam.runRate.toFixed(2)}
+                  RR: {battingTeam.runRate?.toFixed(2) || '0.00'}
                 </div>
               </CardHeader>
               <CardContent className="pt-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <div className="text-sm text-gray-500">Striker</div>
-                    <div className="font-bold">{match.striker?.name} *</div>
+                    <div className="font-bold">{match.striker?.name || 'N/A'} *</div>
                     <div className="text-sm">
-                      {match.striker?.runs} ({match.striker?.ballsFaced})
+                      {match.striker?.runs || 0} ({match.striker?.ballsFaced || 0})
                     </div>
                   </div>
                   <div className="space-y-2">
                     <div className="text-sm text-gray-500">Non-Striker</div>
-                    <div className="font-bold">{match.nonStriker?.name}</div>
+                    <div className="font-bold">{match.nonStriker?.name || 'N/A'}</div>
                     <div className="text-sm">
-                      {match.nonStriker?.runs} ({match.nonStriker?.ballsFaced})
+                      {match.nonStriker?.runs || 0} ({match.nonStriker?.ballsFaced || 0})
                     </div>
                   </div>
                 </div>
@@ -160,10 +160,10 @@ const Scoreboard = () => {
                 
                 <div className="space-y-2">
                   <div className="text-sm text-gray-500">Bowler</div>
-                  <div className="font-bold">{match.currentBowler?.name}</div>
+                  <div className="font-bold">{match.currentBowler?.name || 'N/A'}</div>
                   <div className="text-sm">
-                    {match.currentBowler?.wickets}-{match.currentBowler?.runsConceded} 
-                    ({match.currentBowler?.overs}.{match.currentBall})
+                    {match.currentBowler?.wickets || 0}-{match.currentBowler?.runsConceded || 0} 
+                    ({match.currentBowler?.overs || 0}.{match.currentBall})
                   </div>
                 </div>
                 
@@ -324,7 +324,7 @@ const Scoreboard = () => {
                         <td className="text-right p-2">{player.ballsFaced}</td>
                         <td className="text-right p-2">{player.fours}</td>
                         <td className="text-right p-2">{player.sixes}</td>
-                        <td className="text-right p-2">{player.strikeRate.toFixed(2)}</td>
+                        <td className="text-right p-2">{player.strikeRate?.toFixed(2) || '0.00'}</td>
                         <td className="text-left p-2 text-xs">
                           {player.isOut ? player.dismissalType : 'Not Out'}
                         </td>
@@ -379,7 +379,7 @@ const Scoreboard = () => {
                           <td className="text-right p-2">{player.maidens}</td>
                           <td className="text-right p-2">{player.runsConceded}</td>
                           <td className="text-right p-2">{player.wickets}</td>
-                          <td className="text-right p-2">{player.economyRate.toFixed(2)}</td>
+                          <td className="text-right p-2">{player.economyRate?.toFixed(2) || '0.00'}</td>
                         </tr>
                       ))}
                   </tbody>
