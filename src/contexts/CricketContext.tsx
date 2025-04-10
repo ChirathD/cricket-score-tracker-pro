@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 import { toast } from 'sonner';
 
@@ -358,7 +359,7 @@ export const CricketProvider = ({ children }: { children: ReactNode }) => {
       let currentBall = prev.currentBall + 1;
       let currentOver = prev.currentOver;
       
-      if (currentBall > 5) { // Over completed
+      if (currentBall > 5) { // Over completed (0-5 index, so 6 balls)
         currentBall = 0;
         currentOver += 1;
         
@@ -511,7 +512,7 @@ export const CricketProvider = ({ children }: { children: ReactNode }) => {
       let currentBall = prev.currentBall + 1;
       let currentOver = prev.currentOver;
       
-      if (currentBall > 5) { // Over completed
+      if (currentBall > 5) { // Over completed (6 balls, 0-5 index)
         currentBall = 0;
         currentOver += 1;
         

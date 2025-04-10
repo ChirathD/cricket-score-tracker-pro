@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useCricket, DismissalType } from '@/contexts/CricketContext';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -111,7 +112,9 @@ const Scoreboard = () => {
 
   const battingTeam = match.battingTeam === 'team-a' ? match.teamA : match.teamB;
   const bowlingTeam = match.bowlingTeam === 'team-a' ? match.teamA : match.teamB;
+  // Six balls per over (indices 0-5)
   const isLastBallOfOver = match.currentBall === 5;
+  const overCompleted = isLastBallOfOver && match.currentBall !== 0;
 
   const formatOvers = (overs: number, balls: number) => {
     return `${overs}.${balls}`;
@@ -259,7 +262,7 @@ const Scoreboard = () => {
                 </div>
                 
                 <div className="grid grid-cols-2 gap-2">
-                  {isLastBallOfOver && (
+                  {overCompleted && (
                     <Button
                       className="bg-cricket-green hover:bg-cricket-navy text-white"
                       onClick={openNewOverDialog}
@@ -452,8 +455,8 @@ const Scoreboard = () => {
                         <TableRow>
                           <TableCell className="font-medium">Required Run Rate</TableCell>
                           <TableCell>
-                            {Math.max(0, ((team1.totalRuns + 1 - battingTeam.totalRuns) / 
-                            (20 - match.currentOver - (match.currentBall/6))).toFixed(2))}
+                            {(((team1.totalRuns + 1 - battingTeam.totalRuns) / 
+                            Math.max(0.1, (20 - match.currentOver - (match.currentBall/6)))).toFixed(2))}
                           </TableCell>
                         </TableRow>
                       </TableBody>
