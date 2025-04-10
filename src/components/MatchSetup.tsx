@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useCricket } from '@/contexts/CricketContext';
 import { toast } from 'sonner';
+import { createInitialTeam } from './MatchSetupHelper';
 
 const MatchSetup = () => {
   const { 
@@ -39,8 +40,8 @@ const MatchSetup = () => {
     }
 
     createNewMatch({
-      teamA: { id: 'team-a', name: teamAName, players: [] },
-      teamB: { id: 'team-b', name: teamBName, players: [] },
+      teamA: createInitialTeam('team-a', teamAName),
+      teamB: createInitialTeam('team-b', teamBName),
       tossWinner,
       tossChoice
     });
