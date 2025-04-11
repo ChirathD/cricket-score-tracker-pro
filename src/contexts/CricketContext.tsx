@@ -70,6 +70,9 @@ interface CricketContextType {
   undoLastAction: () => void;
   isSetupComplete: boolean;
   isLoading: boolean;
+  isInningsSwitchDialogOpen: boolean;
+  confirmSwitchInnings: (strikerId: string, nonStrikerId: string, bowlerId: string) => Promise<void>;
+  cancelSwitchInnings: () => void;
 }
 
 const defaultContextValue: CricketContextType = {
@@ -92,6 +95,9 @@ const defaultContextValue: CricketContextType = {
   undoLastAction: () => {},
   isSetupComplete: false,
   isLoading: false,
+  isInningsSwitchDialogOpen: false,
+  confirmSwitchInnings: async () => {},
+  cancelSwitchInnings: () => {},
 };
 
 const CricketContext = createContext<CricketContextType>(defaultContextValue);
@@ -103,6 +109,8 @@ export const CricketProvider = ({ children }: { children: ReactNode }) => {
   const [previousMatchStates, setPreviousMatchStates] = useState<Match[]>([]);
   const [isSetupComplete, setIsSetupComplete] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isInningsSwitchDialogOpen, setIsInningsSwitchDialogOpen] = useState(false);
+  const [pendingSwitchInnings, setPendingSwitchInnings] = useState(false);
 
   // Create a new match
   const createNewMatch = async (matchDetails: Partial<Match>) => {
@@ -792,58 +800,18 @@ export const CricketProvider = ({ children }: { children: ReactNode }) => {
   };
 
   // Switch innings
-  // const switchInnings = async () => {
-  //   if (!match) return;
-
-  //   try {
-  //     setIsLoading(true);
-      
-  //     setMatch((prev) => {
-  //       if (!prev) return prev;
-
-  //       // Swap batting and bowling teams
-  //       const newBattingTeam = prev.bowlingTeam;
-  //       const newBowlingTeam = prev.battingTeam;
-        
-  //       // Reset ball and over count
-  //       const newMatch = {
-  //         ...prev,
-  //         battingTeam: newBattingTeam,
-  //         bowlingTeam: newBowlingTeam,
-  //         currentOver: 0,
-  //         currentBall: 0,
-  //         currentInnings: 2 as const,
-  //         striker: undefined,
-  //         nonStriker: undefined,
-  //         currentBowler: undefined
-  //       };
-        
-  //       return newMatch;
-  //     });
-      
-  //     // Update database to reflect innings switch
-  //     await cricketService.updateMatchState(match.id, {
-  //       current_over: 0,
-  //       current_ball: 0,
-  //       total_runs: 0,
-  //       total_wickets: 0,
-  //       striker_id: null,
-  //       non_striker_id: null,
-  //       current_bowler_id: null
-  //     });
-      
-  //   } catch (error) {
-  //     console.error('Error switching innings:', error);
-  //     toast.error('Failed to switch innings');
-  //   } finally {
-  //     setIsLoading(false);
-  //   }
-  // };
-
-  // Switch innings
   const switchInnings = async () => {
     if (!match) return;
-
+    
+    // Instead of automatically switching innings, open the dialog first
+    setIsInningsSwitchDialogOpen(true);
+    setPendingSwitchInnings(true);
+  };
+  
+  // New function to handle the actual innings switch after dialog confirmation
+  const confirmSwitchInnings = async (strikerId: string, nonStrikerId: string, bowlerId: string) => {
+    if (!match || !pendingSwitchInnings) return;
+    
     try {
       setIsLoading(true);
       
@@ -858,21 +826,13 @@ export const CricketProvider = ({ children }: { children: ReactNode }) => {
         const newBattingTeamObj = newBattingTeam === 'team-a' ? prev.teamA : prev.teamB;
         const newBowlingTeamObj = newBowlingTeam === 'team-a' ? prev.teamA : prev.teamB;
         
-        // Select first two available batsmen from new batting team
-        const availableBatsmen = newBattingTeamObj.players.filter(player => !player.isOut);
-        const newStriker = availableBatsmen[0] || undefined;
-        const newNonStriker = availableBatsmen[1] || undefined;
+        // Find selected players
+        const striker = newBattingTeamObj.players.find(p => p.id === strikerId);
+        const nonStriker = newBattingTeamObj.players.find(p => p.id === nonStrikerId);
+        const bowler = newBowlingTeamObj.players.find(p => p.id === bowlerId);
         
-        // Select first bowler from new bowling team
-        const newBowler = newBowlingTeamObj.players[0] || undefined;
-        
-        if (!newStriker || !newNonStriker) {
-          toast.error('Not enough batsmen available for the new innings');
-          return prev;
-        }
-        
-        if (!newBowler) {
-          toast.error('No bowler available for the new innings');
+        if (!striker || !nonStriker || !bowler) {
+          toast.error('Player selection error');
           return prev;
         }
         
@@ -884,141 +844,32 @@ export const CricketProvider = ({ children }: { children: ReactNode }) => {
           currentOver: 0,
           currentBall: 0,
           currentInnings: 2 as const,
-          striker: newStriker,
-          nonStriker: newNonStriker,
-          currentBowler: newBowler
+          striker: striker,
+          nonStriker: nonStriker,
+          currentBowler: bowler
         };
         
         // Show success message
-        toast.success('Innings switched. New batsmen and bowler selected automatically.');
+        toast.success('Innings switched successfully');
         
         return newMatch;
       });
       
       // Update database to reflect innings switch
-      // We need to handle this after state is updated to get the latest values
       setTimeout(async () => {
         if (match) {
-          const updatedMatch = { ...match };
-          const newBattingTeam = updatedMatch.bowlingTeam;
-          const newBowlingTeam = updatedMatch.battingTeam;
-          
-          // Get team objects
-          const newBattingTeamObj = newBattingTeam === 'team-a' ? updatedMatch.teamA : updatedMatch.teamB;
-          const newBowlingTeamObj = newBowlingTeam === 'team-a' ? updatedMatch.teamA : updatedMatch.teamB;
-          
-          // Select first two available batsmen
-          const availableBatsmen = newBattingTeamObj.players.filter(player => !player.isOut);
-          const newStriker = availableBatsmen[0] || undefined;
-          const newNonStriker = availableBatsmen[1] || undefined;
-          
-          // Select first bowler
-          const newBowler = newBowlingTeamObj.players[0] || undefined;
-          
-          if (newStriker && newNonStriker && newBowler) {
-            await cricketService.updateMatchState(match.id, {
-              current_over: 0,
-              current_ball: 0,
-              total_runs: 0,
-              total_wickets: 0,
-              striker_id: newStriker.id,
-              non_striker_id: newNonStriker.id,
-              current_bowler_id: newBowler.id,
-              batting_team: newBattingTeam,
-              bowling_team: newBowlingTeam
-            });
-          }
+          await cricketService.updateMatchState(match.id, {
+            current_over: 0,
+            current_ball: 0,
+            total_runs: 0,
+            total_wickets: 0,
+            striker_id: strikerId,
+            non_striker_id: nonStrikerId,
+            current_bowler_id: bowlerId,
+            batting_team: match.bowlingTeam,
+            bowling_team: match.battingTeam
+          });
         }
       }, 100);
       
-    } catch (error) {
-      console.error('Error switching innings:', error);
-      toast.error('Failed to switch innings');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Start a new over
-  const startNewOver = async () => {
-    if (!match) return;
-
-    try {
-      setIsLoading(true);
-      
-      setMatch((prev) => {
-        if (!prev) return prev;
-
-        return {
-          ...prev,
-          currentBall: 0,
-          currentOver: prev.currentOver + 1,
-          striker: prev.nonStriker,
-          nonStriker: prev.striker,
-          currentBowler: undefined // Require selecting a new bowler
-        };
-      });
-      
-      // Update match state for new over
-      await cricketService.updateMatchState(match.id, {
-        current_over: match.currentOver + 1,
-        current_ball: 0,
-        striker_id: match.nonStriker?.id,
-        non_striker_id: match.striker?.id,
-        current_bowler_id: null // Clear current bowler
-      });
-      
-    } catch (error) {
-      console.error('Error starting new over:', error);
-      toast.error('Failed to start new over');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Undo last action
-  const undoLastAction = () => {
-    if (previousMatchStates.length === 0) {
-      toast.error('No actions to undo');
-      return;
-    }
-
-    const lastState = previousMatchStates.pop();
-    if (lastState) {
-      setMatch(lastState);
-      setPreviousMatchStates([...previousMatchStates]);
-      toast.success('Last action undone');
-      
-      // NOTE: This doesn't undo the database updates, which would require more complex logic
-      // In a production app, we would implement transaction support
-    }
-  };
-
-  const value = {
-    match,
-    createNewMatch,
-    addTeam,
-    addPlayer,
-    startMatch,
-    selectBattingTeam,
-    selectBowlingTeam,
-    selectStriker,
-    selectNonStriker,
-    selectBowler,
-    addRuns,
-    recordWide,
-    recordWicket,
-    switchBatsmen,
-    switchInnings,
-    startNewOver,
-    undoLastAction,
-    isSetupComplete,
-    isLoading,
-  };
-
-  return (
-    <CricketContext.Provider value={value}>
-      {children}
-    </CricketContext.Provider>
-  );
-};
+      // Reset the pending flag and close
