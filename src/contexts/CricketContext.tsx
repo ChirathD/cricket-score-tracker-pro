@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { toast } from 'sonner';
 import * as cricketService from '@/services/cricketService';
@@ -381,30 +382,30 @@ export const CricketProvider = ({ children }: { children: ReactNode }) => {
         
         if (!battingTeamId || !bowlingTeamId) return prev;
 
-        battingTeamId === 'team-a' ? { ...prev.teamA } : { ...prev.teamB };
-        battingTeam.totalRuns += runs;
+        const updatedBattingTeam = battingTeamId === 'team-a' ? { ...prev.teamA } : { ...prev.teamB };
+        updatedBattingTeam.totalRuns += runs;
         
         const totalOvers = prev.currentOver + (prev.currentBall / 6);
-        battingTeam.runRate = totalOvers > 0 ? +(battingTeam.totalRuns / totalOvers).toFixed(2) : 0;
+        updatedBattingTeam.runRate = totalOvers > 0 ? +(updatedBattingTeam.totalRuns / totalOvers).toFixed(2) : 0;
         
-        bowlingTeamId === 'team-a' ? { ...prev.teamA } : { ...prev.teamB };
-        const bowlerIndex = bowlingTeam.players.findIndex(p => p.id === prev.currentBowler?.id);
+        const updatedBowlingTeam = bowlingTeamId === 'team-a' ? { ...prev.teamA } : { ...prev.teamB };
+        const bowlerIndex = updatedBowlingTeam.players.findIndex(p => p.id === prev.currentBowler?.id);
         
         if (bowlerIndex !== -1) {
-          const updatedBowler = { ...bowlingTeam.players[bowlerIndex] };
+          const updatedBowler = { ...updatedBowlingTeam.players[bowlerIndex] };
           updatedBowler.runsConceded += runs;
           
           const bowlerOvers = updatedBowler.overs + (prev.currentBall === 5 ? 1 : prev.currentBall / 6);
           updatedBowler.economyRate = bowlerOvers > 0 ? +(updatedBowler.runsConceded / bowlerOvers).toFixed(2) : 0;
           
-          bowlingTeam.players[bowlerIndex] = updatedBowler;
+          updatedBowlingTeam.players[bowlerIndex] = updatedBowler;
           updatedMatch.currentBowler = updatedBowler;
         }
         
-        const strikerIndex = battingTeam.players.findIndex(p => p.id === prev.striker?.id);
+        const strikerIndex = updatedBattingTeam.players.findIndex(p => p.id === prev.striker?.id);
         
         if (strikerIndex !== -1) {
-          const updatedStriker = { ...battingTeam.players[strikerIndex] };
+          const updatedStriker = { ...updatedBattingTeam.players[strikerIndex] };
           updatedStriker.runs += runs;
           updatedStriker.ballsFaced += 1;
           
@@ -413,7 +414,7 @@ export const CricketProvider = ({ children }: { children: ReactNode }) => {
           
           updatedStriker.strikeRate = +(updatedStriker.runs / updatedStriker.ballsFaced * 100).toFixed(2);
           
-          battingTeam.players[strikerIndex] = updatedStriker;
+          updatedBattingTeam.players[strikerIndex] = updatedStriker;
           updatedMatch.striker = updatedStriker;
         }
         
@@ -425,9 +426,9 @@ export const CricketProvider = ({ children }: { children: ReactNode }) => {
           currentOver += 1;
           
           if (bowlerIndex !== -1) {
-            const updatedBowler = { ...bowlingTeam.players[bowlerIndex] };
+            const updatedBowler = { ...updatedBowlingTeam.players[bowlerIndex] };
             updatedBowler.overs += 1;
-            bowlingTeam.players[bowlerIndex] = updatedBowler;
+            updatedBowlingTeam.players[bowlerIndex] = updatedBowler;
           }
           
           updatedMatch.striker = prev.nonStriker;
@@ -440,11 +441,11 @@ export const CricketProvider = ({ children }: { children: ReactNode }) => {
         }
         
         if (battingTeamId === 'team-a') {
-          updatedMatch.teamA = battingTeam;
-          updatedMatch.teamB = bowlingTeam;
+          updatedMatch.teamA = updatedBattingTeam;
+          updatedMatch.teamB = updatedBowlingTeam;
         } else {
-          updatedMatch.teamA = bowlingTeam;
-          updatedMatch.teamB = battingTeam;
+          updatedMatch.teamA = updatedBowlingTeam;
+          updatedMatch.teamB = updatedBattingTeam;
         }
         
         updatedMatch.currentBall = currentBall;
@@ -478,7 +479,7 @@ export const CricketProvider = ({ children }: { children: ReactNode }) => {
           runs_conceded: match.currentBowler.runsConceded + runs
         });
         
-        const battingTeam = match.battingTeam === 'team-a' ? match.teamA : match.teamB;
+        const currentBattingTeam = match.battingTeam === 'team-a' ? match.teamA : match.teamB;
         const nextBall = match.currentBall + 1 > 5 ? 0 : match.currentBall + 1;
         const nextOver = match.currentBall + 1 > 5 ? match.currentOver + 1 : match.currentOver;
         
@@ -497,7 +498,7 @@ export const CricketProvider = ({ children }: { children: ReactNode }) => {
           striker_id: nextStriker?.id,
           non_striker_id: nextNonStriker?.id,
           current_bowler_id: match.currentBowler.id,
-          total_runs: battingTeam.totalRuns + runs,
+          total_runs: currentBattingTeam.totalRuns + runs,
           current_over: nextOver,
           current_ball: nextBall
         });
@@ -527,32 +528,32 @@ export const CricketProvider = ({ children }: { children: ReactNode }) => {
         
         if (!battingTeamId || !bowlingTeamId) return prev;
 
-        battingTeamId === 'team-a' ? { ...prev.teamA } : { ...prev.teamB };
-        battingTeam.totalRuns += 1;
+        const updatedBattingTeam = battingTeamId === 'team-a' ? { ...prev.teamA } : { ...prev.teamB };
+        updatedBattingTeam.totalRuns += 1;
         
         const totalOvers = prev.currentOver + (prev.currentBall / 6);
-        battingTeam.runRate = totalOvers > 0 ? +(battingTeam.totalRuns / totalOvers).toFixed(2) : 0;
+        updatedBattingTeam.runRate = totalOvers > 0 ? +(updatedBattingTeam.totalRuns / totalOvers).toFixed(2) : 0;
         
-        bowlingTeamId === 'team-a' ? { ...prev.teamA } : { ...prev.teamB };
-        const bowlerIndex = bowlingTeam.players.findIndex(p => p.id === prev.currentBowler?.id);
+        const updatedBowlingTeam = bowlingTeamId === 'team-a' ? { ...prev.teamA } : { ...prev.teamB };
+        const bowlerIndex = updatedBowlingTeam.players.findIndex(p => p.id === prev.currentBowler?.id);
         
         if (bowlerIndex !== -1) {
-          const updatedBowler = { ...bowlingTeam.players[bowlerIndex] };
+          const updatedBowler = { ...updatedBowlingTeam.players[bowlerIndex] };
           updatedBowler.runsConceded += 1;
           
           const bowlerOvers = updatedBowler.overs + (prev.currentBall / 6);
           updatedBowler.economyRate = bowlerOvers > 0 ? +(updatedBowler.runsConceded / bowlerOvers).toFixed(2) : 0;
           
-          bowlingTeam.players[bowlerIndex] = updatedBowler;
+          updatedBowlingTeam.players[bowlerIndex] = updatedBowler;
           updatedMatch.currentBowler = updatedBowler;
         }
         
         if (battingTeamId === 'team-a') {
-          updatedMatch.teamA = battingTeam;
-          updatedMatch.teamB = bowlingTeam;
+          updatedMatch.teamA = updatedBattingTeam;
+          updatedMatch.teamB = updatedBowlingTeam;
         } else {
-          updatedMatch.teamA = bowlingTeam;
-          updatedMatch.teamB = battingTeam;
+          updatedMatch.teamA = updatedBowlingTeam;
+          updatedMatch.teamB = updatedBattingTeam;
         }
         
         return updatedMatch;
@@ -577,9 +578,9 @@ export const CricketProvider = ({ children }: { children: ReactNode }) => {
           wides: 1
         });
         
-        const battingTeam = match.battingTeam === 'team-a' ? match.teamA : match.teamB;
+        const currentBattingTeam = match.battingTeam === 'team-a' ? match.teamA : match.teamB;
         await cricketService.updateMatchState(match.id, {
-          total_runs: battingTeam.totalRuns + 1
+          total_runs: currentBattingTeam.totalRuns + 1
         });
       }
     } catch (error) {
@@ -607,36 +608,36 @@ export const CricketProvider = ({ children }: { children: ReactNode }) => {
         
         if (!battingTeamId || !bowlingTeamId) return prev;
 
-        battingTeamId === 'team-a' ? { ...prev.teamA } : { ...prev.teamB };
-        battingTeam.totalWickets += 1;
+        const updatedBattingTeam = battingTeamId === 'team-a' ? { ...prev.teamA } : { ...prev.teamB };
+        updatedBattingTeam.totalWickets += 1;
         
         const isBowlerWicket = ['Bowled', 'LBW', 'Caught', 'Stumped'].includes(dismissalType);
-        const bowlingTeam = bowlingTeamId === 'team-a' ? { ...prev.teamA } : { ...prev.teamB };
+        const updatedBowlingTeam = bowlingTeamId === 'team-a' ? { ...prev.teamA } : { ...prev.teamB };
         
         if (isBowlerWicket && prev.currentBowler) {
-          const bowlerIndex = bowlingTeam.players.findIndex(p => p.id === prev.currentBowler?.id);
+          const bowlerIndex = updatedBowlingTeam.players.findIndex(p => p.id === prev.currentBowler?.id);
           
           if (bowlerIndex !== -1) {
-            const updatedBowler = { ...bowlingTeam.players[bowlerIndex] };
+            const updatedBowler = { ...updatedBowlingTeam.players[bowlerIndex] };
             updatedBowler.wickets += 1;
-            bowlingTeam.players[bowlerIndex] = updatedBowler;
+            updatedBowlingTeam.players[bowlerIndex] = updatedBowler;
             updatedMatch.currentBowler = updatedBowler;
           }
         }
         
-        const strikerIndex = battingTeam.players.findIndex(p => p.id === prev.striker?.id);
+        const strikerIndex = updatedBattingTeam.players.findIndex(p => p.id === prev.striker?.id);
         
         if (strikerIndex !== -1) {
-          const updatedStriker = { ...battingTeam.players[strikerIndex] };
+          const updatedStriker = { ...updatedBattingTeam.players[strikerIndex] };
           updatedStriker.isOut = true;
           updatedStriker.dismissalType = dismissalType;
           updatedStriker.dismissedBy = dismissedBy;
           updatedStriker.ballsFaced += 1;
           
-          battingTeam.players[strikerIndex] = updatedStriker;
+          updatedBattingTeam.players[strikerIndex] = updatedStriker;
         }
         
-        const newBatsman = battingTeam.players.find(p => p.id === newBatsmanId);
+        const newBatsman = updatedBattingTeam.players.find(p => p.id === newBatsmanId);
         
         if (!newBatsman) {
           toast.error('Selected batsman not found!');
@@ -656,11 +657,11 @@ export const CricketProvider = ({ children }: { children: ReactNode }) => {
         }
         
         if (battingTeamId === 'team-a') {
-          updatedMatch.teamA = battingTeam;
-          updatedMatch.teamB = bowlingTeam;
+          updatedMatch.teamA = updatedBattingTeam;
+          updatedMatch.teamB = updatedBowlingTeam;
         } else {
-          updatedMatch.teamA = bowlingTeam;
-          updatedMatch.teamB = battingTeam;
+          updatedMatch.teamA = updatedBowlingTeam;
+          updatedMatch.teamB = updatedBattingTeam;
         }
         
         updatedMatch.currentBall = currentBall;
@@ -700,10 +701,10 @@ export const CricketProvider = ({ children }: { children: ReactNode }) => {
           });
         }
         
-        const battingTeam = match.battingTeam === 'team-a' ? match.teamA : match.teamB;
+        const currentBattingTeam = match.battingTeam === 'team-a' ? match.teamA : match.teamB;
         await cricketService.updateMatchState(match.id, {
           striker_id: newBatsmanId,
-          total_wickets: battingTeam.totalWickets + 1,
+          total_wickets: currentBattingTeam.totalWickets + 1,
           current_over: nextOver,
           current_ball: nextBall
         });
@@ -787,9 +788,7 @@ export const CricketProvider = ({ children }: { children: ReactNode }) => {
             total_wickets: 0,
             striker_id: strikerId,
             non_striker_id: nonStrikerId,
-            current_bowler_id: bowlerId,
-            batting_team: match.bowlingTeam,
-            bowling_team: match.battingTeam
+            current_bowler_id: bowlerId
           });
         }
       }, 100);
