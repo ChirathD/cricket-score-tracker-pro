@@ -112,18 +112,15 @@ export const CricketProvider = ({ children }: { children: ReactNode }) => {
   const [isInningsSwitchDialogOpen, setIsInningsSwitchDialogOpen] = useState(false);
   const [pendingSwitchInnings, setPendingSwitchInnings] = useState(false);
 
-  // Create a new match
   const createNewMatch = async (matchDetails: Partial<Match>) => {
     try {
       setIsLoading(true);
       
-      // Create the match in the database
       const newMatchData = await cricketService.createMatch(
         matchDetails.teamA?.name || 'Team A',
         matchDetails.teamB?.name || 'Team B'
       );
       
-      // Create initial team structures
       const teamA: Team = {
         id: 'team-a',
         name: matchDetails.teamA?.name || 'Team A',
@@ -170,10 +167,9 @@ export const CricketProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  // Add or update a team
   const addTeam = async (team: Partial<Team>) => {
     if (!match) return;
-
+    
     setMatch((prev) => {
       if (!prev) return prev;
 
@@ -189,25 +185,21 @@ export const CricketProvider = ({ children }: { children: ReactNode }) => {
     });
   };
 
-  // Add a player to a team
   const addPlayer = async (teamId: string, player: Partial<Player>) => {
     if (!match) return;
     
     try {
       setIsLoading(true);
       
-      // Determine team name for the database
       const teamName = teamId === 'team-a' ? match.teamA.name : match.teamB.name;
       
-      // Add player to the database
       const newPlayerData = await cricketService.addPlayer(
         match.id,
         teamName,
         player.name || 'Player',
-        'batsman' // Default role, can be updated
+        'batsman'
       );
       
-      // Create the player object for our state
       const newPlayer: Player = {
         id: newPlayerData.id,
         name: player.name || 'Player',
@@ -249,7 +241,6 @@ export const CricketProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  // Start the match
   const startMatch = async () => {
     if (!match || !match.teamA.name || !match.teamB.name || 
         match.teamA.players.length < 2 || match.teamB.players.length < 2 ||
@@ -262,7 +253,6 @@ export const CricketProvider = ({ children }: { children: ReactNode }) => {
     try {
       setIsLoading(true);
       
-      // Update match details in the database
       await cricketService.updateMatchDetails(match.id, {
         toss_winner: match.tossWinner,
         elected_to: match.tossChoice,
@@ -270,7 +260,6 @@ export const CricketProvider = ({ children }: { children: ReactNode }) => {
         bowling_team: match.bowlingTeam
       });
       
-      // Initialize match state in the database
       await cricketService.updateMatchState(match.id, {
         striker_id: match.striker.id,
         non_striker_id: match.nonStriker.id,
@@ -298,7 +287,6 @@ export const CricketProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  // Select batting team
   const selectBattingTeam = (teamId: string) => {
     if (!match) return;
 
@@ -315,7 +303,6 @@ export const CricketProvider = ({ children }: { children: ReactNode }) => {
     });
   };
 
-  // Select bowling team
   const selectBowlingTeam = (teamId: string) => {
     if (!match) return;
 
@@ -332,7 +319,6 @@ export const CricketProvider = ({ children }: { children: ReactNode }) => {
     });
   };
 
-  // Select a striker
   const selectStriker = (playerId: string) => {
     if (!match) return;
 
@@ -348,7 +334,6 @@ export const CricketProvider = ({ children }: { children: ReactNode }) => {
     });
   };
 
-  // Select a non-striker
   const selectNonStriker = (playerId: string) => {
     if (!match) return;
 
@@ -364,7 +349,6 @@ export const CricketProvider = ({ children }: { children: ReactNode }) => {
     });
   };
 
-  // Select a bowler
   const selectBowler = (playerId: string) => {
     if (!match) return;
 
@@ -380,11 +364,9 @@ export const CricketProvider = ({ children }: { children: ReactNode }) => {
     });
   };
 
-  // Add runs scored
   const addRuns = async (runs: number) => {
     if (!match || !match.striker || !match.currentBowler) return;
 
-    // Save current state for undo
     setPreviousMatchStates([...previousMatchStates, match]);
 
     try {
@@ -399,23 +381,19 @@ export const CricketProvider = ({ children }: { children: ReactNode }) => {
         
         if (!battingTeamId || !bowlingTeamId) return prev;
 
-        // Update batting team
-        const battingTeam = battingTeamId === 'team-a' ? { ...prev.teamA } : { ...prev.teamB };
+        battingTeamId === 'team-a' ? { ...prev.teamA } : { ...prev.teamB };
         battingTeam.totalRuns += runs;
         
-        // Calculate run rate
         const totalOvers = prev.currentOver + (prev.currentBall / 6);
         battingTeam.runRate = totalOvers > 0 ? +(battingTeam.totalRuns / totalOvers).toFixed(2) : 0;
         
-        // Update bowler
-        const bowlingTeam = bowlingTeamId === 'team-a' ? { ...prev.teamA } : { ...prev.teamB };
+        bowlingTeamId === 'team-a' ? { ...prev.teamA } : { ...prev.teamB };
         const bowlerIndex = bowlingTeam.players.findIndex(p => p.id === prev.currentBowler?.id);
         
         if (bowlerIndex !== -1) {
           const updatedBowler = { ...bowlingTeam.players[bowlerIndex] };
           updatedBowler.runsConceded += runs;
           
-          // Calculate economy rate
           const bowlerOvers = updatedBowler.overs + (prev.currentBall === 5 ? 1 : prev.currentBall / 6);
           updatedBowler.economyRate = bowlerOvers > 0 ? +(updatedBowler.runsConceded / bowlerOvers).toFixed(2) : 0;
           
@@ -423,7 +401,6 @@ export const CricketProvider = ({ children }: { children: ReactNode }) => {
           updatedMatch.currentBowler = updatedBowler;
         }
         
-        // Update striker
         const strikerIndex = battingTeam.players.findIndex(p => p.id === prev.striker?.id);
         
         if (strikerIndex !== -1) {
@@ -440,33 +417,28 @@ export const CricketProvider = ({ children }: { children: ReactNode }) => {
           updatedMatch.striker = updatedStriker;
         }
         
-        // Update ball count
         let currentBall = prev.currentBall + 1;
         let currentOver = prev.currentOver;
         
-        if (currentBall > 5) { // Over completed (0-5 index, so 6 balls)
+        if (currentBall > 5) {
           currentBall = 0;
           currentOver += 1;
           
-          // Bowler completed an over
           if (bowlerIndex !== -1) {
             const updatedBowler = { ...bowlingTeam.players[bowlerIndex] };
             updatedBowler.overs += 1;
             bowlingTeam.players[bowlerIndex] = updatedBowler;
           }
           
-          // Switch batsmen at end of over
           updatedMatch.striker = prev.nonStriker;
           updatedMatch.nonStriker = prev.striker;
         } else {
-          // Switch batsmen for odd runs
           if (runs % 2 === 1) {
             updatedMatch.striker = prev.nonStriker;
             updatedMatch.nonStriker = prev.striker;
           }
         }
         
-        // Update teams in match object
         if (battingTeamId === 'team-a') {
           updatedMatch.teamA = battingTeam;
           updatedMatch.teamB = bowlingTeam;
@@ -481,9 +453,7 @@ export const CricketProvider = ({ children }: { children: ReactNode }) => {
         return updatedMatch;
       });
       
-      // Update database - we need to do this after state update to get the latest values
       if (match && match.striker && match.currentBowler) {
-        // Record the delivery
         await cricketService.recordDelivery(match.id, {
           striker_id: match.striker.id,
           non_striker_id: match.nonStriker?.id,
@@ -496,7 +466,6 @@ export const CricketProvider = ({ children }: { children: ReactNode }) => {
           over_number: match.currentOver
         });
         
-        // Update batsman stats
         await cricketService.updateBattingStats(match.striker.id, match.id, {
           runs_scored: match.striker.runs + runs,
           balls_faced: match.striker.ballsFaced + 1,
@@ -504,13 +473,11 @@ export const CricketProvider = ({ children }: { children: ReactNode }) => {
           sixes: match.striker.sixes + (runs === 6 ? 1 : 0)
         });
         
-        // Update bowler stats
         await cricketService.updateBowlingStats(match.currentBowler.id, match.id, {
           balls_bowled: match.currentBowler.overs * 6 + match.currentBall + 1,
           runs_conceded: match.currentBowler.runsConceded + runs
         });
         
-        // Update match state
         const battingTeam = match.battingTeam === 'team-a' ? match.teamA : match.teamB;
         const nextBall = match.currentBall + 1 > 5 ? 0 : match.currentBall + 1;
         const nextOver = match.currentBall + 1 > 5 ? match.currentOver + 1 : match.currentOver;
@@ -519,11 +486,9 @@ export const CricketProvider = ({ children }: { children: ReactNode }) => {
         let nextNonStriker = match.nonStriker;
         
         if (nextBall === 0) {
-          // End of over, switch batsmen
           nextStriker = match.nonStriker;
           nextNonStriker = match.striker;
         } else if (runs % 2 === 1) {
-          // Odd runs, switch batsmen
           nextStriker = match.nonStriker;
           nextNonStriker = match.striker;
         }
@@ -537,7 +502,6 @@ export const CricketProvider = ({ children }: { children: ReactNode }) => {
           current_ball: nextBall
         });
       }
-      
     } catch (error) {
       console.error('Error adding runs:', error);
       toast.error('Failed to update run information');
@@ -546,11 +510,9 @@ export const CricketProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  // Record a wide
   const recordWide = async () => {
     if (!match) return;
 
-    // Save current state for undo
     setPreviousMatchStates([...previousMatchStates, match]);
 
     try {
@@ -565,23 +527,19 @@ export const CricketProvider = ({ children }: { children: ReactNode }) => {
         
         if (!battingTeamId || !bowlingTeamId) return prev;
 
-        // Update batting team (wide adds 1 run)
-        const battingTeam = battingTeamId === 'team-a' ? { ...prev.teamA } : { ...prev.teamB };
+        battingTeamId === 'team-a' ? { ...prev.teamA } : { ...prev.teamB };
         battingTeam.totalRuns += 1;
         
-        // Calculate run rate
         const totalOvers = prev.currentOver + (prev.currentBall / 6);
         battingTeam.runRate = totalOvers > 0 ? +(battingTeam.totalRuns / totalOvers).toFixed(2) : 0;
         
-        // Update bowler (wide adds 1 run to bowler's conceded runs)
-        const bowlingTeam = bowlingTeamId === 'team-a' ? { ...prev.teamA } : { ...prev.teamB };
+        bowlingTeamId === 'team-a' ? { ...prev.teamA } : { ...prev.teamB };
         const bowlerIndex = bowlingTeam.players.findIndex(p => p.id === prev.currentBowler?.id);
         
         if (bowlerIndex !== -1) {
           const updatedBowler = { ...bowlingTeam.players[bowlerIndex] };
           updatedBowler.runsConceded += 1;
           
-          // Calculate economy rate
           const bowlerOvers = updatedBowler.overs + (prev.currentBall / 6);
           updatedBowler.economyRate = bowlerOvers > 0 ? +(updatedBowler.runsConceded / bowlerOvers).toFixed(2) : 0;
           
@@ -589,7 +547,6 @@ export const CricketProvider = ({ children }: { children: ReactNode }) => {
           updatedMatch.currentBowler = updatedBowler;
         }
         
-        // Update teams in match object
         if (battingTeamId === 'team-a') {
           updatedMatch.teamA = battingTeam;
           updatedMatch.teamB = bowlingTeam;
@@ -598,14 +555,10 @@ export const CricketProvider = ({ children }: { children: ReactNode }) => {
           updatedMatch.teamB = battingTeam;
         }
         
-        // Note: Ball count doesn't increment for wides
-        
         return updatedMatch;
       });
       
-      // Update database with wide information
       if (match && match.currentBowler) {
-        // Record the delivery as a wide
         await cricketService.recordDelivery(match.id, {
           striker_id: match.striker?.id,
           non_striker_id: match.nonStriker?.id,
@@ -619,19 +572,16 @@ export const CricketProvider = ({ children }: { children: ReactNode }) => {
           over_number: match.currentOver
         });
         
-        // Update bowler stats
         await cricketService.updateBowlingStats(match.currentBowler.id, match.id, {
           runs_conceded: match.currentBowler.runsConceded + 1,
-          wides: 1 // Increment wides
+          wides: 1
         });
         
-        // Update match state
         const battingTeam = match.battingTeam === 'team-a' ? match.teamA : match.teamB;
         await cricketService.updateMatchState(match.id, {
           total_runs: battingTeam.totalRuns + 1
         });
       }
-      
     } catch (error) {
       console.error('Error recording wide:', error);
       toast.error('Failed to record wide');
@@ -640,11 +590,9 @@ export const CricketProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  // Record a wicket
   const recordWicket = async (dismissalType: DismissalType, newBatsmanId: string, dismissedBy?: string) => {
     if (!match || !match.striker) return;
 
-    // Save current state for undo
     setPreviousMatchStates([...previousMatchStates, match]);
 
     try {
@@ -659,11 +607,9 @@ export const CricketProvider = ({ children }: { children: ReactNode }) => {
         
         if (!battingTeamId || !bowlingTeamId) return prev;
 
-        // Update batting team
-        const battingTeam = battingTeamId === 'team-a' ? { ...prev.teamA } : { ...prev.teamB };
+        battingTeamId === 'team-a' ? { ...prev.teamA } : { ...prev.teamB };
         battingTeam.totalWickets += 1;
         
-        // Update bowler (increment wickets for dismissal types credited to bowler)
         const isBowlerWicket = ['Bowled', 'LBW', 'Caught', 'Stumped'].includes(dismissalType);
         const bowlingTeam = bowlingTeamId === 'team-a' ? { ...prev.teamA } : { ...prev.teamB };
         
@@ -678,7 +624,6 @@ export const CricketProvider = ({ children }: { children: ReactNode }) => {
           }
         }
         
-        // Update striker (mark as out)
         const strikerIndex = battingTeam.players.findIndex(p => p.id === prev.striker?.id);
         
         if (strikerIndex !== -1) {
@@ -686,12 +631,11 @@ export const CricketProvider = ({ children }: { children: ReactNode }) => {
           updatedStriker.isOut = true;
           updatedStriker.dismissalType = dismissalType;
           updatedStriker.dismissedBy = dismissedBy;
-          updatedStriker.ballsFaced += 1; // Increment balls faced
+          updatedStriker.ballsFaced += 1;
           
           battingTeam.players[strikerIndex] = updatedStriker;
         }
         
-        // Find new batsman
         const newBatsman = battingTeam.players.find(p => p.id === newBatsmanId);
         
         if (!newBatsman) {
@@ -699,24 +643,18 @@ export const CricketProvider = ({ children }: { children: ReactNode }) => {
           return prev;
         }
         
-        // Update ball count
         let currentBall = prev.currentBall + 1;
         let currentOver = prev.currentOver;
         
-        if (currentBall > 5) { // Over completed (6 balls, 0-5 index)
+        if (currentBall > 5) {
           currentBall = 0;
           currentOver += 1;
           
-          // Switch non-striker to strike
           updatedMatch.striker = newBatsman;
-          // Non-striker remains the same at the end of the over
         } else {
-          // New batsman comes in at striker's end
           updatedMatch.striker = newBatsman;
-          // Non-striker remains the same
         }
         
-        // Update teams in match object
         if (battingTeamId === 'team-a') {
           updatedMatch.teamA = battingTeam;
           updatedMatch.teamB = bowlingTeam;
@@ -731,12 +669,10 @@ export const CricketProvider = ({ children }: { children: ReactNode }) => {
         return updatedMatch;
       });
       
-      // Update database with wicket information
       if (match && match.striker && match.currentBowler) {
         const nextBall = match.currentBall + 1 > 5 ? 0 : match.currentBall + 1;
         const nextOver = match.currentBall + 1 > 5 ? match.currentOver + 1 : match.currentOver;
         
-        // Record the delivery with wicket
         await cricketService.recordDelivery(match.id, {
           striker_id: match.striker.id,
           non_striker_id: match.nonStriker?.id,
@@ -750,7 +686,6 @@ export const CricketProvider = ({ children }: { children: ReactNode }) => {
           over_number: match.currentOver
         });
         
-        // Update batsman stats
         await cricketService.updateBattingStats(match.striker.id, match.id, {
           balls_faced: match.striker.ballsFaced + 1,
           is_out: true,
@@ -758,7 +693,6 @@ export const CricketProvider = ({ children }: { children: ReactNode }) => {
           bowler_id: dismissalType === 'Bowled' || dismissalType === 'LBW' ? match.currentBowler.id : undefined
         });
         
-        // Update bowler stats if it's a bowler's wicket
         if (['Bowled', 'LBW', 'Caught', 'Stumped'].includes(dismissalType)) {
           await cricketService.updateBowlingStats(match.currentBowler.id, match.id, {
             balls_bowled: match.currentBowler.overs * 6 + match.currentBall + 1,
@@ -766,7 +700,6 @@ export const CricketProvider = ({ children }: { children: ReactNode }) => {
           });
         }
         
-        // Update match state
         const battingTeam = match.battingTeam === 'team-a' ? match.teamA : match.teamB;
         await cricketService.updateMatchState(match.id, {
           striker_id: newBatsmanId,
@@ -775,7 +708,6 @@ export const CricketProvider = ({ children }: { children: ReactNode }) => {
           current_ball: nextBall
         });
       }
-      
     } catch (error) {
       console.error('Error recording wicket:', error);
       toast.error('Failed to record wicket');
@@ -784,7 +716,6 @@ export const CricketProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  // Switch batsmen
   const switchBatsmen = () => {
     if (!match || !match.striker || !match.nonStriker) return;
 
@@ -799,16 +730,13 @@ export const CricketProvider = ({ children }: { children: ReactNode }) => {
     });
   };
 
-  // Switch innings
   const switchInnings = async () => {
     if (!match) return;
     
-    // Instead of automatically switching innings, open the dialog first
     setIsInningsSwitchDialogOpen(true);
     setPendingSwitchInnings(true);
   };
-  
-  // New function to handle the actual innings switch after dialog confirmation
+
   const confirmSwitchInnings = async (strikerId: string, nonStrikerId: string, bowlerId: string) => {
     if (!match || !pendingSwitchInnings) return;
     
@@ -818,15 +746,12 @@ export const CricketProvider = ({ children }: { children: ReactNode }) => {
       setMatch((prev) => {
         if (!prev) return prev;
 
-        // Swap batting and bowling teams
         const newBattingTeam = prev.bowlingTeam;
         const newBowlingTeam = prev.battingTeam;
         
-        // Get team objects for new batting and bowling teams
         const newBattingTeamObj = newBattingTeam === 'team-a' ? prev.teamA : prev.teamB;
         const newBowlingTeamObj = newBowlingTeam === 'team-a' ? prev.teamA : prev.teamB;
         
-        // Find selected players
         const striker = newBattingTeamObj.players.find(p => p.id === strikerId);
         const nonStriker = newBattingTeamObj.players.find(p => p.id === nonStrikerId);
         const bowler = newBowlingTeamObj.players.find(p => p.id === bowlerId);
@@ -836,7 +761,6 @@ export const CricketProvider = ({ children }: { children: ReactNode }) => {
           return prev;
         }
         
-        // Reset ball and over count
         const newMatch = {
           ...prev,
           battingTeam: newBattingTeam,
@@ -849,13 +773,11 @@ export const CricketProvider = ({ children }: { children: ReactNode }) => {
           currentBowler: bowler
         };
         
-        // Show success message
         toast.success('Innings switched successfully');
         
         return newMatch;
       });
       
-      // Update database to reflect innings switch
       setTimeout(async () => {
         if (match) {
           await cricketService.updateMatchState(match.id, {
@@ -872,4 +794,69 @@ export const CricketProvider = ({ children }: { children: ReactNode }) => {
         }
       }, 100);
       
-      // Reset the pending flag and close
+      setPendingSwitchInnings(false);
+      setIsInningsSwitchDialogOpen(false);
+    } catch (error) {
+      console.error('Error switching innings:', error);
+      toast.error('Failed to switch innings');
+      setPendingSwitchInnings(false);
+      setIsInningsSwitchDialogOpen(false);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const cancelSwitchInnings = () => {
+    setPendingSwitchInnings(false);
+    setIsInningsSwitchDialogOpen(false);
+  };
+
+  const startNewOver = async () => {
+    if (!match) return;
+    
+    toast.info('Starting new over');
+  };
+
+  const undoLastAction = () => {
+    if (previousMatchStates.length === 0) {
+      toast.info('Nothing to undo');
+      return;
+    }
+    
+    const previousState = previousMatchStates[previousMatchStates.length - 1];
+    setMatch(previousState);
+    setPreviousMatchStates(previousMatchStates.slice(0, -1));
+    toast.info('Action undone');
+  };
+
+  return (
+    <CricketContext.Provider value={{
+      match,
+      createNewMatch,
+      addTeam,
+      addPlayer,
+      startMatch,
+      selectBattingTeam,
+      selectBowlingTeam,
+      selectStriker,
+      selectNonStriker,
+      selectBowler,
+      addRuns,
+      recordWide,
+      recordWicket,
+      switchBatsmen,
+      switchInnings,
+      startNewOver,
+      undoLastAction,
+      isSetupComplete,
+      isLoading,
+      isInningsSwitchDialogOpen,
+      confirmSwitchInnings,
+      cancelSwitchInnings
+    }}>
+      {children}
+    </CricketContext.Provider>
+  );
+};
+
+export default CricketProvider;
