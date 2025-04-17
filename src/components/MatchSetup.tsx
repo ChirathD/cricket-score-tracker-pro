@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,20 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useCricket } from '@/contexts/CricketContext';
 import { toast } from 'sonner';
 import { createInitialTeam } from './MatchSetupHelper';
+
+// Hardcoded team and player data
+const TEAM_A_NAME = "2011";
+const TEAM_B_NAME = "2012";
+
+const TEAM_A_PLAYERS = [
+  "Anju", "Supun R", "Arshad", "Supun H", "Nimesh", 
+  "Onila", "Ravishka", "Dinura", "Kamal", "Kasun", "Viraj"
+];
+
+const TEAM_B_PLAYERS = [
+  "Achintha", "Chirath", "Samitha", "Amila C", "Chahal", 
+  "Anupa", "Virun", "Gayan", "Mutti", "Isuru", "Janith"
+];
 
 const MatchSetup = () => {
   const { 
@@ -26,12 +40,39 @@ const MatchSetup = () => {
   } = useCricket();
 
   const [tab, setTab] = useState("teams");
-  const [teamAName, setTeamAName] = useState("");
-  const [teamBName, setTeamBName] = useState("");
-  const [tossWinner, setTossWinner] = useState("");
+  const [teamAName, setTeamAName] = useState(TEAM_A_NAME);
+  const [teamBName, setTeamBName] = useState(TEAM_B_NAME);
+  const [tossWinner, setTossWinner] = useState("team-a");
   const [tossChoice, setTossChoice] = useState<"bat" | "bowl">("bat");
   const [newPlayerName, setNewPlayerName] = useState("");
   const [selectedTeamForPlayer, setSelectedTeamForPlayer] = useState("team-a");
+
+  // Auto-create match with hardcoded data on component mount
+  useEffect(() => {
+    if (!match) {
+      handleCreateMatch();
+    }
+  }, [match]);
+
+  // Add hardcoded players after match creation
+  useEffect(() => {
+    if (match && match.teamA.players.length === 0 && match.teamB.players.length === 0) {
+      // Add Team A players
+      const addTeamAPlayers = async () => {
+        for (const playerName of TEAM_A_PLAYERS) {
+          await addPlayer('team-a', { name: playerName });
+        }
+        // Add Team B players after Team A is done
+        for (const playerName of TEAM_B_PLAYERS) {
+          await addPlayer('team-b', { name: playerName });
+        }
+        toast.success("All players added successfully");
+        setTab("selectPlaying11");
+      };
+      
+      addTeamAPlayers();
+    }
+  }, [match]);
 
   const handleCreateMatch = () => {
     if (!teamAName || !teamBName) {
